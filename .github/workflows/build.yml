@@ -14,21 +14,36 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Packaging Tools from GitHub
+      - name: Install Packaging Tools
         run: |
-          wget -q https://github.com/Steveice10/bannertool/releases/download/1.2.0/bannertool.zip
-          unzip -q bannertool.zip -d /tmp/
-          mv /tmp/linux-x86_64/bannertool /usr/local/bin/
+          mkdir -p /tmp/tools && cd /tmp/tools
+
+          # 下载并安装 bannertool
+          curl -fsSL https://github.com/Steveice10/bannertool/releases/download/1.2.0/bannertool.zip -o bannertool.zip
+          unzip -q bannertool.zip
+          if [ -f linux-x86_64/bannertool ]; then
+            mv linux-x86_64/bannertool /usr/local/bin/bannertool
+          else
+            mv bannertool /usr/local/bin/bannertool
+          fi
           chmod +x /usr/local/bin/bannertool
 
-          wget -q https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.18.3/makerom-v0.18.3-ubuntu_x86_64.zip
-          unzip -q makerom-*.zip -d /usr/local/bin/
+          # 下载并安装 makerom
+          curl -fsSL https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.18.3/makerom-v0.18.3-ubuntu_x86_64.zip -o makerom.zip
+          unzip -q makerom.zip -d /tmp/makerom_out
+          find /tmp/makerom_out -type f -name "makerom*" -exec mv {} /usr/local/bin/makerom \;
           chmod +x /usr/local/bin/makerom
+
+          rm -rf /tmp/tools /tmp/makerom_out
+
+          bannertool --version || echo "bannertool installed"
+          makerom -v || echo "makerom installed"
 
       - name: Build Project
         run: |
           export DEVKITPRO=/opt/devkitpro
           export DEVKITARM=/opt/devkitpro/devkitARM
+          export PATH=$DEVKITPRO/tools/bin:$PATH
           make
 
       - name: Package CIA
