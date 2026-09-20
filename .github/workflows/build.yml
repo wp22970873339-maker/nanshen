@@ -19,11 +19,16 @@ jobs:
           sed -i 's|https://pkg.devkitpro.org/packages|https://wii.leseratte10.de/devkitPro/pacman/packages|g' /opt/devkitpro/pacman/etc/pacman.d/* || true
           sed -i 's|https://downloads.devkitpro.org/packages|https://wii.leseratte10.de/devkitPro/pacman/packages|g' /opt/devkitpro/pacman/etc/pacman.d/* || true
 
-          # 2. 安装 3DS 全套开发套件 (包含 libctru, citro2d, citro3d, 3ds_rules 等)
-          dkp-pacman -Sy --noconfirm 3ds-dev
+          # 2. 安装 3DS 全套开发套件，自动回答所有交互问题
+          yes | dkp-pacman -Sy --noconfirm --needed 3ds-dev
 
       - name: Compile Project
         run: |
+          # 加载 devkitPro 环境变量
+          export DEVKITPRO=/opt/devkitpro
+          . /etc/profile.d/devkit-env.sh || true
+          export PATH=$DEVKITPRO/tools/bin:$DEVKITPRO/devkitARM/bin:$PATH
+          
           make clean || true
           make
 
