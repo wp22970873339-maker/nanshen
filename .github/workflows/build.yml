@@ -1,8 +1,7 @@
-name: Build 3DS Calculator
+name: Build 3DS Homebrew
 
 on:
   push:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -14,14 +13,24 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Build Project
+      - name: Switch to Community Mirror and Install 3DS SDK
         run: |
+          # 1. 替换官方源为社区镜像源，彻底绕过 devkitpro.org 的 403 封锁
+          sed -i 's|https://pkg.devkitpro.org/packages|https://wii.leseratte10.de/devkitPro/pacman/packages|g' /opt/devkitpro/pacman/etc/pacman.d/* || true
+          sed -i 's|https://downloads.devkitpro.org/packages|https://wii.leseratte10.de/devkitPro/pacman/packages|g' /opt/devkitpro/pacman/etc/pacman.d/* || true
+
+          # 2. 安装 3DS 全套开发套件 (包含 libctru, citro2d, citro3d, 3ds_rules 等)
+          dkp-pacman -Sy --noconfirm 3ds-dev
+
+      - name: Compile Project
+        run: |
+          make clean || true
           make
 
-      - name: Upload Artifacts
+      - name: Upload 3DSX File
         uses: actions/upload-artifact@v4
         with:
-          name: Apple-Calculator-3DS
+          name: Apple-Calculator-3DSX
           path: |
             *.3dsx
-            *.elf
+            *.smdh
